@@ -1,0 +1,15 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<section class="card narrow">
+  <h1>Вход</h1>
+  <form method="post" action="/admin/login" class="form">
+    <label>Логин
+      <input type="text" name="username" required>
+    </label>
+    <label>Пароль
+      <input type="password" name="password" required>
+    </label>
+    <button class="btn" type="submit">Войти</button>
+  </form>
+</section>
+{% endblock %}

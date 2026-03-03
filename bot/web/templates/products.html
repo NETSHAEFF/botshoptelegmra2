@@ -1,0 +1,42 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="row-between">
+  <h1>Товары</h1>
+  <a class="btn" href="/admin/products/new">Добавить товар</a>
+</div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Название</th>
+      <th>Цена ₽</th>
+      <th>Медиа</th>
+      <th>Статус</th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in products %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.name }}</td>
+      <td>{{ p.price_rub }}</td>
+      <td>{{ p.media_type or "photo" }}</td>
+      <td>{{ "Активен" if p.is_active else "Скрыт" }}</td>
+      <td>
+        <div class="actions">
+          <a class="btn small" href="/admin/products/{{ p.id }}/edit">Изменить</a>
+          <form method="post" action="/admin/products/{{ p.id }}/toggle">
+            <button class="btn small ghost" type="submit">{{ "Скрыть" if p.is_active else "Активировать" }}</button>
+          </form>
+          <form method="post" action="/admin/products/{{ p.id }}/delete" onsubmit="return confirm('Удалить товар?');">
+            <button class="btn small danger" type="submit">Удалить</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

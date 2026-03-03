@@ -1,0 +1,53 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h1>{{ title }}</h1>
+<section class="card">
+  <form method="post" action="{{ action }}" class="form" enctype="multipart/form-data">
+    <label>Название
+      <input type="text" name="name" value="{{ product.name if product else '' }}" required>
+    </label>
+
+    <label>Цена (₽)
+      <input type="number" min="1" name="price_rub" value="{{ product.price_rub if product else 100 }}" required>
+    </label>
+
+    <label>Описание
+      <textarea name="description" rows="4" required>{{ product.description if product else '' }}</textarea>
+    </label>
+
+    <label>Фото (`file_id` или URL)
+      <input type="text" name="photo_file_id" value="{{ product.photo_file_id if product else '' }}">
+    </label>
+    <label>Тип медиа товара
+      <select name="media_type">
+        <option value="photo" {% if not product or product.media_type == "photo" %}selected{% endif %}>Фото</option>
+        <option value="video" {% if product and product.media_type == "video" %}selected{% endif %}>Видео</option>
+        <option value="animation" {% if product and product.media_type == "animation" %}selected{% endif %}>GIF/Анимация</option>
+        <option value="document" {% if product and product.media_type == "document" %}selected{% endif %}>Документ</option>
+        <option value="none" {% if product and product.media_type == "none" %}selected{% endif %}>Без медиа</option>
+      </select>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="no_media">
+      Не показывать медиа у товара
+    </label>
+    <label>Загрузить медиа (upload: фото/видео/gif/файл)
+      <input type="file" name="photo_upload" accept="image/*,video/*,.gif">
+    </label>
+
+    <label>Контент после оплаты (ссылка/текст)
+      <textarea name="content" rows="4" required>{{ product.content if product else '' }}</textarea>
+    </label>
+
+    <label class="check">
+      <input type="checkbox" name="is_active" {% if not product or product.is_active %}checked{% endif %}>
+      Активен в каталоге
+    </label>
+
+    <div class="actions">
+      <button class="btn" type="submit">Сохранить</button>
+      <a class="btn ghost" href="/admin/products">Отмена</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

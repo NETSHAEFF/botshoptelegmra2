@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row-between">
+  <h1>Дашборд</h1>
+  <form method="post" action="/admin/stats/reset">
+    <button class="btn danger" type="submit" onclick="return confirm('Сбросить статистику?');">Сбросить статистику</button>
+  </form>
+</div>
+<p class="muted">
+  {% if stats_reset_at %}
+    Период статистики: с {{ stats_reset_at }} (UTC)
+  {% else %}
+    Период статистики: за все время
+  {% endif %}
+</p>
+
+<div class="grid4">
+  <div class="card stat"><div class="stat-value">{{ products_count }}</div><div class="stat-label">Товаров</div></div>
+  <div class="card stat"><div class="stat-value">{{ orders_count }}</div><div class="stat-label">Заказов (всего в БД)</div></div>
+  <div class="card stat"><div class="stat-value">{{ waiting_count }}</div><div class="stat-label">Ждут подтверждения</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.users_period }}</div><div class="stat-label">Новых пользователей</div></div>
+</div>
+
+<h2>Продажи</h2>
+<div class="grid4">
+  <div class="card stat"><div class="stat-value">{{ analytics.orders_total }}</div><div class="stat-label">Заказов в периоде</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_orders_total }}</div><div class="stat-label">Оплачено</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.conversion_rate }}%</div><div class="stat-label">Конверсия</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.revenue_total }} ₽</div><div class="stat-label">Выручка</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_orders_24h }}</div><div class="stat-label">Оплачено за 24ч</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_orders_7d }}</div><div class="stat-label">Оплачено за 7 дней</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.revenue_24h }} ₽</div><div class="stat-label">Выручка за 24ч</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.revenue_7d }} ₽</div><div class="stat-label">Выручка за 7 дней</div></div>
+</div>
+
+<h2>Способы оплаты</h2>
+<div class="grid4">
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_crypto }}</div><div class="stat-label">Crypto</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_card }}</div><div class="stat-label">Перевод/Карта</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_ozon }}</div><div class="stat-label">Озон Банк</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_yandex }}</div><div class="stat-label">Яндекс Банк</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.paid_yoomoney }}</div><div class="stat-label">ЮMoney</div></div>
+</div>
+
+<h2>Воронка</h2>
+<div class="grid4">
+  <div class="card stat"><div class="stat-value">{{ analytics.starts_total }}</div><div class="stat-label">/start</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.catalog_views }}</div><div class="stat-label">Просмотры каталога</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.product_views }}</div><div class="stat-label">Просмотры товаров</div></div>
+  <div class="card stat"><div class="stat-value">{{ analytics.payment_attempts }}</div><div class="stat-label">Попытки оплаты</div></div>
+</div>
+
+<h2>Топ товаров</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Товар</th>
+      <th>Продаж</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if analytics.top_products %}
+      {% for row in analytics.top_products %}
+      <tr>
+        <td>{{ row.name }}</td>
+        <td>{{ row.qty }}</td>
+      </tr>
+      {% endfor %}
+    {% else %}
+      <tr><td colspan="2" class="muted">Пока нет данных по продажам</td></tr>
+    {% endif %}
+  </tbody>
+</table>
+
+<div class="row-between">
+  <h2>Последние события</h2>
+  <form method="post" action="/admin/events/clear">
+    <button class="btn danger small" type="submit" onclick="return confirm('Очистить все события?');">Очистить события</button>
+  </form>
+</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Время</th>
+      <th>Событие</th>
+      <th>User ID</th>
+      <th>Payload</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in recent_events %}
+    <tr>
+      <td>{{ e.created_at }}</td>
+      <td>{{ e.event_type }}</td>
+      <td>{{ e.user_id or '-' }}</td>
+      <td>{{ e.payload or '-' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

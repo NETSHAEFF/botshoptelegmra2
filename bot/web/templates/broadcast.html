@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Рассылка</h1>
+<section class="card">
+  <form method="post" action="/admin/broadcast" class="form" enctype="multipart/form-data">
+    <label>Текст рассылки (необязательно, если есть файл)
+      <textarea name="text" rows="5" placeholder="Введите текст сообщения..."></textarea>
+    </label>
+    <label>Файл (фото, видео, gif, документ)
+      <input type="file" name="media_upload">
+    </label>
+    <button class="btn" type="submit">Отправить рассылку</button>
+  </form>
+</section>
+{% endblock %}

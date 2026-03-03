@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row-between">
+  <h1>Заказы</h1>
+  <form method="post" action="/admin/orders/clear">
+    <button class="btn danger" type="submit" onclick="return confirm('Очистить весь список заказов?');">Очистить список</button>
+  </form>
+</div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Пользователь</th>
+      <th>Товар</th>
+      <th>Сумма</th>
+      <th>Метод</th>
+      <th>Статус</th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for o in orders %}
+    <tr>
+      <td>#{{ o.id }}</td>
+      <td>{{ o.user_id }}</td>
+      <td>{{ products[o.product_id].name if o.product_id in products else "Удален" }}</td>
+      <td>{{ o.amount_rub }} ₽</td>
+      <td>{{ o.payment_method.value }}</td>
+      <td>{{ o.status.value }}</td>
+      <td>
+        <div class="actions">
+          {% if o.status.value != "paid" %}
+          <form method="post" action="/admin/orders/{{ o.id }}/confirm">
+            <button class="btn small" type="submit">Подтвердить</button>
+          </form>
+          {% endif %}
+          <form method="post" action="/admin/orders/{{ o.id }}/delete">
+            <button class="btn small danger" type="submit" onclick="return confirm('Удалить заказ #{{ o.id }}?');">Удалить</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
