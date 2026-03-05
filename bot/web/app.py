@@ -1,6 +1,9 @@
 ﻿from __future__ import annotations
 
+import asyncio
 import hmac
+import os
+import sys
 from contextlib import suppress
 from pathlib import Path
 
@@ -20,6 +23,7 @@ from bot.config import load_settings
 from bot.database import repo
 from bot.database.db import create_engine, create_sessionmaker, init_db
 from bot.database.models import OrderStatus
+from bot.services.bot_profile import apply_bot_profile
 from bot.services.broadcaster import broadcast_message
 
 settings = load_settings()
@@ -70,6 +74,11 @@ def redirect(path: str) -> RedirectResponse:
     return RedirectResponse(url=path, status_code=303)
 
 
+async def restart_process_soon(delay_seconds: float = 1.0) -> None:
+    await asyncio.sleep(delay_seconds)
+    os.execv(sys.executable, [sys.executable, "-m", "bot.main"])
+
+
 async def upload_media_to_telegram(upload: UploadFile | None) -> tuple[str, str] | None:
     if not upload or not upload.filename:
         return None
@@ -90,8 +99,11 @@ async def upload_media_to_telegram(upload: UploadFile | None) -> tuple[str, str]
     elif content_type.startswith("video/"):
         media_type = "video"
 
+    async with sessionmaker() as session:
+        runtime_token = await repo.get_effective_bot_token(session, settings.bot_token)
+
     bot = Bot(
-        settings.bot_token,
+        runtime_token,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     try:
@@ -450,6 +462,7 @@ async def settings_page(request: Request, session: AsyncSession = Depends(get_se
             default="Оплатите через ЮMoney и пришлите чек.",
         ),
         "btn_catalog": await repo.get_setting(session, repo.SETTING_BTN_CATALOG, default="💎Товары"),
+        "btn_proofs": await repo.get_setting(session, repo.SETTING_BTN_PROOFS, default="✅ Доказательства"),
         "btn_support": await repo.get_setting(session, repo.SETTING_BTN_SUPPORT, default="🛠 Техподдержка"),
         "btn_admin": await repo.get_setting(session, repo.SETTING_BTN_ADMIN, default="⚙️Админка"),
         "btn_buy": await repo.get_setting(session, repo.SETTING_BTN_BUY, default="Купить"),
@@ -462,6 +475,13 @@ async def settings_page(request: Request, session: AsyncSession = Depends(get_se
         "btn_i_paid": await repo.get_setting(session, repo.SETTING_BTN_I_PAID, default="Я оплатил"),
         "btn_cancel_order": await repo.get_setting(session, repo.SETTING_BTN_CANCEL_ORDER, default="Отменить"),
         "support_contact": await repo.get_setting(session, repo.SETTING_SUPPORT_CONTACT, default="@support"),
+        "proofs_text": await repo.get_setting(
+            session,
+            repo.SETTING_PROOFS_TEXT,
+            default="Добавьте сюда ваши доказательства/отзывы.",
+        ),
+        "bot_token_override": await repo.get_setting(session, repo.SETTING_BOT_TOKEN_OVERRIDE, default=""),
+        "bot_profile_name": await repo.get_setting(session, repo.SETTING_BOT_PROFILE_NAME, default=""),
     }
     return render(request, "settings.html", data)
 
@@ -485,6 +505,7 @@ async def settings_save(
     yandex_instructions: str = Form(""),
     yoomoney_instructions: str = Form(""),
     btn_catalog: str = Form("💎Товары"),
+    btn_proofs: str = Form("✅ Доказательства"),
     btn_support: str = Form("🛠 Техподдержка"),
     btn_admin: str = Form("⚙️Админка"),
     btn_buy: str = Form("Купить"),
@@ -497,9 +518,19 @@ async def settings_save(
     btn_i_paid: str = Form("Я оплатил"),
     btn_cancel_order: str = Form("Отменить"),
     support_contact: str = Form("@support"),
+    proofs_text: str = Form(""),
+    bot_token_override: str = Form(""),
+    bot_profile_name: str = Form(""),
+    update_token_and_restart: str | None = Form(None),
 ) -> RedirectResponse:
     if not is_logged_in(request):
         return redirect("/admin/login")
+
+    previous_override_token = await repo.get_setting(
+        session,
+        repo.SETTING_BOT_TOKEN_OVERRIDE,
+        default="",
+    )
 
     intro_photo_value = intro_photo.strip()
     intro_media_type_value = (intro_media_type or "none").strip().lower()
@@ -530,6 +561,7 @@ async def settings_save(
     await repo.set_setting(session, repo.SETTING_YANDEX_INSTRUCTIONS, yandex_instructions)
     await repo.set_setting(session, repo.SETTING_YOOMONEY_INSTRUCTIONS, yoomoney_instructions)
     await repo.set_setting(session, repo.SETTING_BTN_CATALOG, btn_catalog.strip() or "💎Товары")
+    await repo.set_setting(session, repo.SETTING_BTN_PROOFS, btn_proofs.strip() or "✅ Доказательства")
     await repo.set_setting(session, repo.SETTING_BTN_SUPPORT, btn_support.strip() or "🛠 Техподдержка")
     await repo.set_setting(session, repo.SETTING_BTN_ADMIN, btn_admin.strip() or "⚙️Админка")
     await repo.set_setting(session, repo.SETTING_BTN_BUY, btn_buy.strip() or "Купить")
@@ -542,8 +574,50 @@ async def settings_save(
     await repo.set_setting(session, repo.SETTING_BTN_I_PAID, btn_i_paid.strip() or "Я оплатил")
     await repo.set_setting(session, repo.SETTING_BTN_CANCEL_ORDER, btn_cancel_order.strip() or "Отменить")
     await repo.set_setting(session, repo.SETTING_SUPPORT_CONTACT, support_contact.strip())
+    await repo.set_setting(
+        session,
+        repo.SETTING_PROOFS_TEXT,
+        (proofs_text or "").strip() or "Доказательства пока не добавлены.",
+    )
+    await repo.set_setting(session, repo.SETTING_BOT_TOKEN_OVERRIDE, bot_token_override.strip())
+    await repo.set_setting(session, repo.SETTING_BOT_PROFILE_NAME, bot_profile_name.strip())
 
-    set_flash(request, "Настройки сохранены.", "success")
+    try:
+        runtime_token = await repo.get_effective_bot_token(session, settings.bot_token)
+        profile_bot = Bot(runtime_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+        try:
+            await apply_bot_profile(profile_bot, bot_profile_name.strip())
+        finally:
+            await profile_bot.session.close()
+    except Exception:
+        set_flash(
+            request,
+            "Настройки сохранены, но применить название бота сейчас не удалось. Проверьте токен и права.",
+            "error",
+        )
+        return redirect("/admin/settings")
+
+    token_changed = (previous_override_token or "").strip() != bot_token_override.strip()
+    if update_token_and_restart is not None:
+        asyncio.create_task(restart_process_soon())
+        return HTMLResponse(
+            (
+                "<html><body style='font-family:Segoe UI,Arial,sans-serif;background:#0a1020;color:#eaf1ff;padding:24px;'>"
+                "<h2>Токен обновлен.</h2>"
+                "<p>Приложение перезапускается автоматически. Обновите страницу через 3-5 секунд.</p>"
+                "</body></html>"
+            ),
+            status_code=200,
+        )
+
+    if token_changed:
+        set_flash(
+            request,
+            "Настройки сохранены. Для переключения polling на новый токен перезапустите приложение.",
+            "success",
+        )
+    else:
+        set_flash(request, "Настройки сохранены.", "success")
     return redirect("/admin/settings")
 
 
@@ -579,7 +653,7 @@ async def broadcast_send(
             return redirect("/admin/broadcast")
 
     bot = Bot(
-        settings.bot_token,
+        await repo.get_effective_bot_token(session, settings.bot_token),
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     try:
@@ -689,7 +763,7 @@ async def confirm_order(
     if item:
         _, product = item
         bot = Bot(
-            settings.bot_token,
+            await repo.get_effective_bot_token(session, settings.bot_token),
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
         try:

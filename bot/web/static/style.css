@@ -133,6 +133,15 @@ body {
   gap: 14px;
 }
 
+.section {
+  padding: 20px;
+}
+
+.section h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
 label {
   display: flex;
   flex-direction: column;
@@ -206,6 +215,26 @@ select:focus {
   flex-wrap: wrap;
 }
 
+.sticky-actions {
+  position: sticky;
+  bottom: 10px;
+  padding: 10px;
+  background: rgba(10, 16, 32, 0.72);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.inline-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inline-row input {
+  flex: 1;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -271,6 +300,11 @@ select:focus {
   .grid3,
   .grid4 {
     grid-template-columns: 1fr;
+  }
+
+  .inline-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .topbar-inner {

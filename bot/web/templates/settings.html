@@ -1,35 +1,76 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Настройки</h1>
-<section class="card">
-  <form method="post" action="/admin/settings" class="form" enctype="multipart/form-data">
+<form method="post" action="/admin/settings" class="form" enctype="multipart/form-data">
+  <section class="card section">
     <h2>Основное</h2>
+    <div class="grid2">
+      <label>Контакт техподдержки (username, ссылка или ID)
+        <input type="text" name="support_contact" value="{{ support_contact }}">
+      </label>
+      <label>Название бота
+        <input type="text" name="bot_profile_name" value="{{ bot_profile_name }}" placeholder="Мой магазин">
+      </label>
+    </div>
+
+    <label>Токен бота (если пусто, используется токен из .env)
+      <div class="inline-row">
+        <input type="text" name="bot_token_override" value="{{ bot_token_override }}" placeholder="123456:ABC...">
+        <button class="btn" type="submit" name="update_token_and_restart" value="1">Обновить токен бота</button>
+      </div>
+    </label>
+  </section>
+
+  <section class="card section">
+    <h2>Кнопки главного меню</h2>
+    <div class="grid2">
+      <label>Кнопка «Товары»
+        <input type="text" name="btn_catalog" value="{{ btn_catalog }}">
+      </label>
+      <label>Кнопка «Доказательства»
+        <input type="text" name="btn_proofs" value="{{ btn_proofs }}">
+      </label>
+      <label>Кнопка «Техподдержка»
+        <input type="text" name="btn_support" value="{{ btn_support }}">
+      </label>
+      <label>Кнопка «Админка»
+        <input type="text" name="btn_admin" value="{{ btn_admin }}">
+      </label>
+    </div>
+    <label>Текст раздела «Доказательства»
+      <textarea name="proofs_text" rows="4">{{ proofs_text }}</textarea>
+    </label>
+  </section>
+
+  <section class="card section">
+    <h2>Вступление</h2>
     <label>Вступительный текст
       <textarea name="intro" rows="4">{{ intro }}</textarea>
     </label>
-    <label>Фото вступления (`file_id` или URL)
+    <label>Медиа вступления (`file_id` или URL)
       <input type="text" name="intro_photo" value="{{ intro_photo }}">
     </label>
-    <label>Тип медиа вступления
-      <select name="intro_media_type">
-        <option value="none" {% if intro_media_type == "none" %}selected{% endif %}>Без медиа</option>
-        <option value="photo" {% if intro_media_type == "photo" %}selected{% endif %}>Фото</option>
-        <option value="video" {% if intro_media_type == "video" %}selected{% endif %}>Видео</option>
-        <option value="animation" {% if intro_media_type == "animation" %}selected{% endif %}>GIF/Анимация</option>
-        <option value="document" {% if intro_media_type == "document" %}selected{% endif %}>Документ</option>
-      </select>
-    </label>
+    <div class="grid2">
+      <label>Тип медиа вступления
+        <select name="intro_media_type">
+          <option value="none" {% if intro_media_type == "none" %}selected{% endif %}>Без медиа</option>
+          <option value="photo" {% if intro_media_type == "photo" %}selected{% endif %}>Фото</option>
+          <option value="video" {% if intro_media_type == "video" %}selected{% endif %}>Видео</option>
+          <option value="animation" {% if intro_media_type == "animation" %}selected{% endif %}>GIF/Анимация</option>
+          <option value="document" {% if intro_media_type == "document" %}selected{% endif %}>Документ</option>
+        </select>
+      </label>
+      <label>Загрузить медиа вступления
+        <input type="file" name="intro_photo_upload" accept="image/*,video/*,.gif">
+      </label>
+    </div>
     <label class="check">
       <input type="checkbox" name="intro_no_media">
       Не показывать медиа во вступлении
     </label>
-    <label>Загрузить медиа вступления (upload: фото/видео/gif/файл)
-      <input type="file" name="intro_photo_upload" accept="image/*,video/*,.gif">
-    </label>
-    <label>Контакт техподдержки (username, ссылка или ID)
-      <input type="text" name="support_contact" value="{{ support_contact }}">
-    </label>
+  </section>
 
+  <section class="card section">
     <h2>Способы оплаты</h2>
     <div class="grid2">
       <label class="check">
@@ -53,37 +94,21 @@
         ЮMoney включен
       </label>
     </div>
-
-    <label>Реквизиты: Перевод/Карта
-      <textarea name="manual_instructions" rows="4">{{ manual_instructions }}</textarea>
-    </label>
-    <label>Реквизиты: Озон Банк
-      <textarea name="ozon_instructions" rows="4">{{ ozon_instructions }}</textarea>
-    </label>
-    <label>Реквизиты: Яндекс Банк
-      <textarea name="yandex_instructions" rows="4">{{ yandex_instructions }}</textarea>
-    </label>
-    <label>Реквизиты: ЮMoney
-      <textarea name="yoomoney_instructions" rows="4">{{ yoomoney_instructions }}</textarea>
-    </label>
-
-    <h2>Названия кнопок</h2>
     <div class="grid2">
-      <label>Кнопка каталога
-        <input type="text" name="btn_catalog" value="{{ btn_catalog }}">
+      <label>Реквизиты: Перевод/Карта
+        <textarea name="manual_instructions" rows="4">{{ manual_instructions }}</textarea>
       </label>
-      <label>Кнопка техподдержки
-        <input type="text" name="btn_support" value="{{ btn_support }}">
+      <label>Реквизиты: Озон Банк
+        <textarea name="ozon_instructions" rows="4">{{ ozon_instructions }}</textarea>
       </label>
-      <label>Кнопка админки
-        <input type="text" name="btn_admin" value="{{ btn_admin }}">
+      <label>Реквизиты: Яндекс Банк
+        <textarea name="yandex_instructions" rows="4">{{ yandex_instructions }}</textarea>
       </label>
-      <label>Кнопка «Купить»
-        <input type="text" name="btn_buy" value="{{ btn_buy }}">
+      <label>Реквизиты: ЮMoney
+        <textarea name="yoomoney_instructions" rows="4">{{ yoomoney_instructions }}</textarea>
       </label>
-      <label>Кнопка «Назад»
-        <input type="text" name="btn_back" value="{{ btn_back }}">
-      </label>
+    </div>
+    <div class="grid2">
       <label>Кнопка оплаты Crypto
         <input type="text" name="btn_pay_crypto" value="{{ btn_pay_crypto }}">
       </label>
@@ -102,12 +127,20 @@
       <label>Кнопка «Я оплатил»
         <input type="text" name="btn_i_paid" value="{{ btn_i_paid }}">
       </label>
+      <label>Кнопка «Назад»
+        <input type="text" name="btn_back" value="{{ btn_back }}">
+      </label>
       <label>Кнопка отмены заказа
         <input type="text" name="btn_cancel_order" value="{{ btn_cancel_order }}">
       </label>
+      <label>Кнопка «Купить»
+        <input type="text" name="btn_buy" value="{{ btn_buy }}">
+      </label>
     </div>
+  </section>
 
+  <div class="actions sticky-actions">
     <button class="btn" type="submit">Сохранить настройки</button>
-  </form>
-</section>
+  </div>
+</form>
 {% endblock %}

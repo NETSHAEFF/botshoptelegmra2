@@ -25,6 +25,7 @@ from bot.handlers.admin import intro as admin_intro
 from bot.handlers.admin import orders as admin_orders
 from bot.handlers.admin import broadcast as admin_broadcast
 from bot.middlewares.db import DbSessionMiddleware
+from bot.services.bot_profile import apply_bot_profile
 from bot.services.cryptobot import CryptoBotClient
 from bot.services.invoice_watcher import run_invoice_watcher
 
@@ -96,31 +97,41 @@ async def main() -> None:
         format="[%(asctime)s] %(levelname)s:%(name)s:%(message)s",
     )
 
-    lock_file = _acquire_instance_lock(settings.bot_token)
+    engine = create_engine(settings)
+    sessionmaker = create_sessionmaker(engine)
+    await init_db(engine)
+
+    async with sessionmaker() as session:
+        await repo.ensure_default_settings(
+            session,
+            intro_default=settings.intro_default,
+            crypto_enabled=settings.crypto_payment_enabled_default,
+            manual_enabled=settings.manual_payment_enabled_default,
+            manual_instructions=settings.manual_payment_instructions_default,
+        )
+        runtime_bot_token = await repo.get_effective_bot_token(session, settings.bot_token)
+
+    lock_file = _acquire_instance_lock(runtime_bot_token)
     if not lock_file:
         logging.error(
             "Another bot instance is already running for this token. Stop duplicate process first."
         )
+        await engine.dispose()
         return
 
     try:
-        engine = create_engine(settings)
-        sessionmaker = create_sessionmaker(engine)
-        await init_db(engine)
 
+        bot = Bot(runtime_bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
         async with sessionmaker() as session:
-            await repo.ensure_default_settings(
+            profile_name = await repo.get_setting(
                 session,
-                intro_default=settings.intro_default,
-                crypto_enabled=settings.crypto_payment_enabled_default,
-                manual_enabled=settings.manual_payment_enabled_default,
-                manual_instructions=settings.manual_payment_instructions_default,
+                repo.SETTING_BOT_PROFILE_NAME,
+                default="",
             )
-
-        bot = Bot(
-            settings.bot_token,
-            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-        )
+        try:
+            await apply_bot_profile(bot, profile_name)
+        except Exception:
+            logging.exception("Failed to apply bot profile settings")
         dp = Dispatcher(storage=MemoryStorage())
 
         dp.update.middleware(DbSessionMiddleware(sessionmaker))

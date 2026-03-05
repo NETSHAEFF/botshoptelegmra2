@@ -12,6 +12,7 @@ from bot.database.models import Product
 
 
 BTN_CATALOG_DEFAULT = "💎Товары"
+BTN_PROOFS_DEFAULT = "✅ Доказательства"
 BTN_SUPPORT_DEFAULT = "🛠 Техподдержка"
 BTN_ADMIN_DEFAULT = "⚙️Админка"
 BTN_BUY_DEFAULT = "Купить"
@@ -34,10 +35,12 @@ def _label(labels: dict[str, str] | None, key: str, default: str) -> str:
 
 def main_menu_kb(is_admin: bool, labels: dict[str, str] | None = None) -> ReplyKeyboardMarkup:
     catalog_text = _label(labels, "btn_catalog", BTN_CATALOG_DEFAULT)
+    proofs_text = _label(labels, "btn_proofs", BTN_PROOFS_DEFAULT)
     support_text = _label(labels, "btn_support", BTN_SUPPORT_DEFAULT)
     admin_text = _label(labels, "btn_admin", BTN_ADMIN_DEFAULT)
     row = [
         KeyboardButton(text=catalog_text),
+        KeyboardButton(text=proofs_text),
         KeyboardButton(text=support_text),
     ]
     if is_admin:
@@ -151,4 +154,3 @@ def manual_payment_kb(order_id: int, labels: dict[str, str] | None = None) -> In
     )
     builder.adjust(1)
     return builder.as_markup()
-
