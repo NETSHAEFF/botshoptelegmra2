@@ -8,6 +8,7 @@ from aiogram.exceptions import TelegramForbiddenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database import repo
+from bot.services.text_format import format_text
 
 logger = logging.getLogger(__name__)
 
@@ -22,21 +23,22 @@ async def broadcast_message(
     """Send a message to all users. Returns (success, failed)."""
 
     users = await repo.list_users(session, include_blocked=False)
+    formatted_text = format_text(text)
     success = 0
     failed = 0
 
     for user in users:
         try:
             if media_file_id and media_type == "photo":
-                await bot.send_photo(user.id, photo=media_file_id, caption=text or None)
+                await bot.send_photo(user.id, photo=media_file_id, caption=formatted_text or None)
             elif media_file_id and media_type == "video":
-                await bot.send_video(user.id, video=media_file_id, caption=text or None)
+                await bot.send_video(user.id, video=media_file_id, caption=formatted_text or None)
             elif media_file_id and media_type == "animation":
-                await bot.send_animation(user.id, animation=media_file_id, caption=text or None)
+                await bot.send_animation(user.id, animation=media_file_id, caption=formatted_text or None)
             elif media_file_id and media_type == "document":
-                await bot.send_document(user.id, document=media_file_id, caption=text or None)
+                await bot.send_document(user.id, document=media_file_id, caption=formatted_text or None)
             else:
-                await bot.send_message(user.id, text or " ")
+                await bot.send_message(user.id, formatted_text or " ")
             success += 1
         except TelegramForbiddenError:
             failed += 1

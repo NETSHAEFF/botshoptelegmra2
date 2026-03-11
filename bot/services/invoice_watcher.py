@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from bot.database import repo
 from bot.database.models import OrderStatus
 from bot.services.cryptobot import CryptoBotClient
+from bot.services.text_format import format_text
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +58,9 @@ async def run_invoice_watcher(
                                     order.user_id,
                                     (
                                         "Оплата получена! Вот ваш товар:\n"
-                                        f"{product.content}"
+                                        f"{format_text(product.content)}"
                                     ),
+                                    parse_mode="HTML",
                                 )
                             except TelegramForbiddenError:
                                 await repo.set_user_blocked(session, order.user_id, True)

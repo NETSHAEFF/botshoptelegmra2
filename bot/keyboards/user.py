@@ -52,6 +52,28 @@ def main_menu_kb(is_admin: bool, labels: dict[str, str] | None = None) -> ReplyK
     )
 
 
+def main_menu_kb_with_flags(
+    is_admin: bool,
+    labels: dict[str, str] | None = None,
+    proofs_enabled: bool = True,
+) -> ReplyKeyboardMarkup:
+    catalog_text = _label(labels, "btn_catalog", BTN_CATALOG_DEFAULT)
+    proofs_text = _label(labels, "btn_proofs", BTN_PROOFS_DEFAULT)
+    support_text = _label(labels, "btn_support", BTN_SUPPORT_DEFAULT)
+    admin_text = _label(labels, "btn_admin", BTN_ADMIN_DEFAULT)
+    row = [KeyboardButton(text=catalog_text)]
+    if proofs_enabled:
+        row.append(KeyboardButton(text=proofs_text))
+    row.append(KeyboardButton(text=support_text))
+    if is_admin:
+        row.append(KeyboardButton(text=admin_text))
+
+    return ReplyKeyboardMarkup(
+        keyboard=[row],
+        resize_keyboard=True,
+    )
+
+
 def products_kb(products: list[Product]) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for product in products:

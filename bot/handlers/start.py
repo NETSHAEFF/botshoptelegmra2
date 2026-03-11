@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database import repo
 from bot.handlers.catalog import send_products
-from bot.keyboards.user import main_menu_kb
+from bot.keyboards.user import main_menu_kb_with_flags
 from bot.services.intro_sender import send_intro_message
 
 router = Router()
@@ -33,14 +33,16 @@ async def cmd_start(message: Message, session: AsyncSession) -> None:
     intro_photo = await repo.get_setting(session, repo.SETTING_INTRO_PHOTO, default="")
     intro_media_type = await repo.get_setting(session, repo.SETTING_INTRO_MEDIA_TYPE, default="none")
     labels = await repo.get_button_labels(session)
+    proofs_enabled = (await repo.get_setting(session, repo.SETTING_PROOFS_ENABLED, default="1")) == "1"
     await send_intro_message(
         message,
         intro_text=intro_text,
         intro_media_file_id=intro_photo,
         intro_media_type=intro_media_type,
-        reply_markup=main_menu_kb(
+        reply_markup=main_menu_kb_with_flags(
             message.from_user.id in message.bot.settings.admin_ids,
             labels=labels,
+            proofs_enabled=proofs_enabled,
         ),
     )
 

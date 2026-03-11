@@ -26,6 +26,7 @@ SETTING_YOOMONEY_ENABLED = "payment_yoomoney_enabled"
 SETTING_YOOMONEY_INSTRUCTIONS = "payment_yoomoney_instructions"
 SETTING_BTN_CATALOG = "btn_catalog"
 SETTING_BTN_PROOFS = "btn_proofs"
+SETTING_PROOFS_ENABLED = "proofs_enabled"
 SETTING_BTN_SUPPORT = "btn_support"
 SETTING_BTN_ADMIN = "btn_admin"
 SETTING_BTN_BUY = "btn_buy"
@@ -40,8 +41,6 @@ SETTING_BTN_CANCEL_ORDER = "btn_cancel_order"
 SETTING_STATS_RESET_AT = "stats_reset_at"
 SETTING_SUPPORT_CONTACT = "support_contact"
 SETTING_PROOFS_TEXT = "proofs_text"
-SETTING_BOT_TOKEN_OVERRIDE = "bot_token_override"
-SETTING_BOT_PROFILE_NAME = "bot_profile_name"
 
 
 async def upsert_user(session: AsyncSession, tg_id: int, username: str | None, full_name: str | None) -> None:
@@ -148,6 +147,7 @@ async def ensure_default_settings(
         SETTING_YOOMONEY_INSTRUCTIONS: "Оплатите через ЮMoney и пришлите чек.",
         SETTING_BTN_CATALOG: "💎Товары",
         SETTING_BTN_PROOFS: "✅ Доказательства",
+        SETTING_PROOFS_ENABLED: "1",
         SETTING_BTN_SUPPORT: "🛠 Техподдержка",
         SETTING_BTN_ADMIN: "⚙️Админка",
         SETTING_BTN_BUY: "Купить",
@@ -162,8 +162,6 @@ async def ensure_default_settings(
         SETTING_STATS_RESET_AT: "",
         SETTING_SUPPORT_CONTACT: "@support",
         SETTING_PROOFS_TEXT: "Добавьте сюда ваши доказательства/отзывы.",
-        SETTING_BOT_TOKEN_OVERRIDE: "",
-        SETTING_BOT_PROFILE_NAME: "",
     }
 
     for key, value in defaults.items():
@@ -315,10 +313,6 @@ async def clear_events(session: AsyncSession) -> int:
     return int(result.rowcount or 0)
 
 
-async def get_effective_bot_token(session: AsyncSession, fallback_token: str) -> str:
-    token = await get_setting(session, SETTING_BOT_TOKEN_OVERRIDE, default="")
-    value = (token or "").strip()
-    return value or fallback_token
 
 
 async def get_order(session: AsyncSession, order_id: int) -> Order | None:

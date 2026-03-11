@@ -16,8 +16,9 @@ from bot.keyboards.user import (
     BTN_CATALOG_DEFAULT,
     BTN_PROOFS_DEFAULT,
     BTN_SUPPORT_DEFAULT,
-    main_menu_kb,
+    main_menu_kb_with_flags,
 )
+from bot.services.text_format import format_text
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -47,11 +48,15 @@ async def menu_proofs(message: Message, session: AsyncSession, state: FSMContext
         default="Доказательства пока не добавлены.",
     )
     labels = await repo.get_button_labels(session)
+    proofs_enabled = (await repo.get_setting(session, repo.SETTING_PROOFS_ENABLED, default="1")) == "1"
+    formatted = format_text((proofs_text or "").strip() or "Доказательства пока не добавлены.")
     await message.answer(
-        (proofs_text or "").strip() or "Доказательства пока не добавлены.",
-        reply_markup=main_menu_kb(
+        formatted,
+        parse_mode="HTML",
+        reply_markup=main_menu_kb_with_flags(
             _is_admin(message.from_user.id, message.bot.settings.admin_ids),
             labels=labels,
+            proofs_enabled=proofs_enabled,
         ),
     )
 
@@ -76,22 +81,26 @@ async def menu_support(message: Message, session: AsyncSession, state: FSMContex
         )
 
     labels = await repo.get_button_labels(session)
+    proofs_enabled = (await repo.get_setting(session, repo.SETTING_PROOFS_ENABLED, default="1")) == "1"
     await message.answer(
-        text,
-        reply_markup=main_menu_kb(
+        format_text(text),
+        parse_mode="HTML",
+        reply_markup=main_menu_kb_with_flags(
             _is_admin(message.from_user.id, message.bot.settings.admin_ids),
             labels=labels,
+            proofs_enabled=proofs_enabled,
         ),
     )
 
 
 @router.message(MenuButtonFilter(repo.SETTING_BTN_ADMIN, BTN_ADMIN_DEFAULT))
-async def menu_admin(message: Message, state: FSMContext) -> None:
+async def menu_admin(message: Message, state: FSMContext, session: AsyncSession) -> None:
     await state.clear()
     if not _is_admin(message.from_user.id, message.bot.settings.admin_ids):
+        proofs_enabled = (await repo.get_setting(session, repo.SETTING_PROOFS_ENABLED, default="1")) == "1"
         await message.answer(
             "Раздел доступен только администраторам.",
-            reply_markup=main_menu_kb(False),
+            reply_markup=main_menu_kb_with_flags(False, proofs_enabled=proofs_enabled),
         )
         return
 

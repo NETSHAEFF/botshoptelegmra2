@@ -6,6 +6,8 @@ from typing import Any
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import Message
 
+from bot.services.text_format import format_text
+
 logger = logging.getLogger(__name__)
 
 
@@ -20,14 +22,15 @@ async def send_intro_message(
 
     media = (intro_media_file_id or "").strip()
     text = intro_text or "Добро пожаловать!"
+    formatted_text = format_text(text)
     media_type = (intro_media_type or "none").strip().lower()
 
     if not media or media_type == "none":
-        await target.answer(text, reply_markup=reply_markup)
+        await target.answer(formatted_text, reply_markup=reply_markup, parse_mode="HTML")
         return
 
     try:
-        caption = text if len(text) <= 1024 else None
+        caption = formatted_text if len(formatted_text) <= 1024 else None
         if media_type == "photo":
             await target.answer_photo(
                 photo=media,
@@ -57,10 +60,10 @@ async def send_intro_message(
                 reply_markup=reply_markup,
             )
         else:
-            await target.answer(text, reply_markup=reply_markup)
+            await target.answer(formatted_text, reply_markup=reply_markup, parse_mode="HTML")
             return
         if caption is None:
-            await target.answer(text)
+            await target.answer(formatted_text, parse_mode="HTML")
     except TelegramBadRequest as exc:
         logger.warning("Intro media is invalid: %s", exc)
-        await target.answer(text, reply_markup=reply_markup)
+        await target.answer(formatted_text, reply_markup=reply_markup, parse_mode="HTML")

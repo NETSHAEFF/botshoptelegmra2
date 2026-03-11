@@ -4,20 +4,8 @@
 <form method="post" action="/admin/settings" class="form" enctype="multipart/form-data">
   <section class="card section">
     <h2>Основное</h2>
-    <div class="grid2">
-      <label>Контакт техподдержки (username, ссылка или ID)
-        <input type="text" name="support_contact" value="{{ support_contact }}">
-      </label>
-      <label>Название бота
-        <input type="text" name="bot_profile_name" value="{{ bot_profile_name }}" placeholder="Мой магазин">
-      </label>
-    </div>
-
-    <label>Токен бота (если пусто, используется токен из .env)
-      <div class="inline-row">
-        <input type="text" name="bot_token_override" value="{{ bot_token_override }}" placeholder="123456:ABC...">
-        <button class="btn" type="submit" name="update_token_and_restart" value="1">Обновить токен бота</button>
-      </div>
+    <label>Контакт техподдержки (username, ссылка или ID)
+      <input type="text" name="support_contact" value="{{ support_contact }}">
     </label>
   </section>
 
@@ -26,6 +14,10 @@
     <div class="grid2">
       <label>Кнопка «Товары»
         <input type="text" name="btn_catalog" value="{{ btn_catalog }}">
+      </label>
+      <label class="check">
+        <input type="checkbox" name="proofs_enabled" {% if proofs_enabled == "1" %}checked{% endif %}>
+        Показывать кнопку «Доказательства»
       </label>
       <label>Кнопка «Доказательства»
         <input type="text" name="btn_proofs" value="{{ btn_proofs }}">

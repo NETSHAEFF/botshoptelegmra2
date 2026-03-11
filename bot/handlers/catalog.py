@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database import repo
 from bot.keyboards.user import products_kb, product_detail_kb
+from bot.services.text_format import format_text
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -41,11 +42,13 @@ async def show_product(callback: CallbackQuery, session: AsyncSession) -> None:
         await callback.answer("Товар не найден", show_alert=True)
         return
 
+    name_html = format_text(product.name or "")
+    description_html = format_text(product.description or "")
     caption = (
-        f"<b>{product.name}</b>\n"
+        f"<b>{name_html}</b>\n"
         f"Цена: <b>{product.price_rub} ₽</b>\n"
         "\n"
-        f"{product.description}"
+        f"{description_html}"
     )
     try:
         await repo.log_event(

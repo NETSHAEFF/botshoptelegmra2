@@ -17,6 +17,7 @@ from bot.keyboards.user import (
 )
 from bot.keyboards.admin import admin_confirm_order_kb
 from bot.services.cryptobot import CryptoBotError
+from bot.services.text_format import format_text
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,8 @@ async def _start_manual_payment(
     labels = await repo.get_button_labels(session)
 
     await callback.message.answer(
-        _normalize_text(instructions),
+        format_text(_normalize_text(instructions)),
+        parse_mode="HTML",
         reply_markup=manual_payment_kb(order.id, labels=labels),
     )
     await callback.answer()
@@ -340,7 +342,8 @@ async def check_crypto_payment(callback: CallbackQuery, session: AsyncSession) -
         if order_with_product:
             _, product = order_with_product
             await callback.message.answer(
-                "Оплата подтверждена! Ваш товар:\n" + product.content
+                "Оплата подтверждена! Ваш товар:\n" + format_text(product.content),
+                parse_mode="HTML",
             )
     else:
         await callback.answer("Оплата еще не получена", show_alert=True)

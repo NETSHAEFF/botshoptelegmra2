@@ -8,6 +8,7 @@ from bot.database import repo
 from bot.database.models import OrderStatus
 from bot.handlers.admin.filters import AdminFilter
 from bot.keyboards.admin import admin_orders_kb
+from bot.services.text_format import format_text
 
 router = Router()
 router.message.filter(AdminFilter())
@@ -59,7 +60,8 @@ async def admin_confirm_payment(callback: CallbackQuery, session: AsyncSession) 
         _, product = order_with_product
         await callback.bot.send_message(
             order.user_id,
-            "Оплата подтверждена! Ваш товар:\n" + product.content,
+            "Оплата подтверждена! Ваш товар:\n" + format_text(product.content),
+            parse_mode="HTML",
         )
 
     await callback.message.answer(f"Заказ #{order_id} подтвержден.")
